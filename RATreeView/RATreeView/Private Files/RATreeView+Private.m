@@ -80,7 +80,7 @@
   
   NSInteger index = [self.treeNodeCollectionController lastVisibleDescendantIndexForItem:treeNode.item];
   
-  __weak __typeof(self) weakSelf = self;
+  __weak typeof(self) weakSelf = self;
   [self.batchChanges collapseItemWithBlock:^{
     UITableViewRowAnimation tableViewRowAnimation = [RATreeView tableViewRowAnimationForTreeViewRowAnimation:rowAnimation];
     [weakSelf.treeNodeCollectionController collapseRowForItem:treeNode.item collapseChildren:collapseChildren updates:^(NSIndexSet *deletions) {
@@ -92,6 +92,16 @@
   [self.tableView endUpdates];
 }
 
+- (void)collapseCellForTreeNode:(RATreeNode *)treeNode helperTreeNode:(RATreeNode *)helperTreeNode collapseChildren:(BOOL)collapseChildren withRowAnimation:(RATreeViewRowAnimation)rowAnimation
+{    
+    __weak typeof(self) weakSelf = self;
+    
+    UITableViewRowAnimation tableViewRowAnimation = [RATreeView tableViewRowAnimationForTreeViewRowAnimation:rowAnimation];
+    [self.treeNodeCollectionController collapseRowForItem:treeNode.item collapseChildren:collapseChildren updates:^(NSIndexSet *deletions) {
+        [weakSelf.tableView deleteRowsAtIndexPaths:IndexesToIndexPaths(deletions) withRowAnimation:tableViewRowAnimation];
+    }];
+}
+
 - (void)expandCellForTreeNode:(RATreeNode *)treeNode
 {
   [self expandCellForTreeNode:treeNode expandChildren:self.expandsChildRowsWhenRowExpands withRowAnimation:self.rowsExpandingAnimation];
@@ -99,21 +109,27 @@
 
 - (void)expandCellForTreeNode:(RATreeNode *)treeNode expandChildren:(BOOL)expandChildren withRowAnimation:(RATreeViewRowAnimation)rowAnimation
 {
-  [self.tableView beginUpdates];
-  [self.batchChanges beginUpdates];
-  
-  NSInteger index = [self.treeNodeCollectionController indexForItem:treeNode.item];
-  __weak __typeof(self) weakSelf = self;
-  [self.batchChanges expandItemWithBlock:^{
     UITableViewRowAnimation tableViewRowAnimation = [RATreeView tableViewRowAnimationForTreeViewRowAnimation:rowAnimation];
-    [weakSelf.treeNodeCollectionController expandRowForItem:treeNode.item expandChildren:expandChildren updates:^(NSIndexSet *insertions) {
-      [weakSelf.tableView insertRowsAtIndexPaths:IndexesToIndexPaths(insertions) withRowAnimation:tableViewRowAnimation];
-    }];
-  } atIndex:index];
-  
-  
-  [self.batchChanges endUpdates];
-  [self.tableView endUpdates];
+    if (tableViewRowAnimation == UITableViewRowAnimationNone) {
+        [UIView setAnimationsEnabled:NO];
+    }
+    [self.tableView beginUpdates];
+    [self.batchChanges beginUpdates];
+
+    NSInteger index = [self.treeNodeCollectionController indexForItem:treeNode.item];
+    __weak typeof(self) weakSelf = self;
+    [self.batchChanges expandItemWithBlock:^{
+        [weakSelf.treeNodeCollectionController expandRowForItem:treeNode.item expandChildren:expandChildren updates:^(NSIndexSet *insertions) {
+            [weakSelf.tableView insertRowsAtIndexPaths:IndexesToIndexPaths(insertions) withRowAnimation:tableViewRowAnimation];
+        }];
+    } atIndex:index];
+
+
+    [self.batchChanges endUpdates];
+    [self.tableView endUpdates];
+    if (tableViewRowAnimation == UITableViewRowAnimationNone) {
+        [UIView setAnimationsEnabled:YES];
+    }
 }
 
 - (void)insertItemAtIndex:(NSInteger)index inParent:(id)parent withAnimation:(RATreeViewRowAnimation)animation
@@ -124,7 +140,7 @@
   }
   idx += index + 1;
   
-  __weak __typeof(self) weakSelf = self;
+  __weak typeof(self) weakSelf = self;
   [self.batchChanges insertItemWithBlock:^{
     [weakSelf.treeNodeCollectionController insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:index] inParent:parent];
     
@@ -133,6 +149,40 @@
     [weakSelf.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:tableViewRowAnimation];
     
   } atIndex:idx];
+}
+
+- (void)expandAllCells
+{
+  [self expandAllCellsWithRowAnimation:self.rowsExpandingAnimation];
+}
+
+- (void)expandAllCellsWithRowAnimation:(RATreeViewRowAnimation)animation
+{
+    UITableViewRowAnimation tableViewRowAnimation = [RATreeView tableViewRowAnimationForTreeViewRowAnimation:animation];
+    if (tableViewRowAnimation == UITableViewRowAnimationNone) {
+        [UIView setAnimationsEnabled:NO];
+    }
+    [self.tableView beginUpdates];
+    [self.batchChanges beginUpdates];
+
+    NSInteger numberOfChildren = [self.dataSource treeView:self numberOfChildrenOfItem:nil];
+    for (int i = 0; i < numberOfChildren; i++) {
+        RATreeNode *node = [self.treeNodeCollectionController treeNodeForIndex:i];
+
+        __weak typeof(self) weakSelf = self;
+        [self.batchChanges expandItemWithBlock:^{
+            [weakSelf.treeNodeCollectionController expandRowForItem:node.item expandChildren:YES updates:^(NSIndexSet *insertions) {
+                [weakSelf.tableView insertRowsAtIndexPaths:IndexesToIndexPaths(insertions) withRowAnimation:tableViewRowAnimation];
+            }];
+        } atIndex:i];
+
+    }
+
+    [self.batchChanges endUpdates];
+    [self.tableView endUpdates];
+    if (tableViewRowAnimation == UITableViewRowAnimationNone) {
+        [UIView setAnimationsEnabled:YES];
+    }
 }
 
 #pragma clang diagnostic push
@@ -146,7 +196,7 @@
   }
   
   idx += index + 1;
-  __weak __typeof(self) weakSelf = self;
+  __weak typeof(self) weakSelf = self;
   [self.batchChanges insertItemWithBlock:^{
     [weakSelf.treeNodeCollectionController moveItemAtIndex:index inParent:parent toIndex:newIndex inParent:newParent updates:^(NSIndexSet *deletions, NSIndexSet *additions) {
       NSArray *deletionsArray = IndexesToIndexPaths(deletions);
@@ -169,7 +219,7 @@
     return;
   }
   
-  __weak __typeof(self) weakSelf = self;
+  __weak typeof(self) weakSelf = self;
   [self.batchChanges insertItemWithBlock:^{
     [weakSelf.treeNodeCollectionController removeItemsAtIndexes:[NSIndexSet indexSetWithIndex:index] inParent:parent updates:^(NSIndexSet *removedIndexes) {
       UITableViewRowAnimation tableViewRowAnimation = [RATreeView tableViewRowAnimationForTreeViewRowAnimation:animation];

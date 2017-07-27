@@ -273,6 +273,20 @@
   [self collapseCellForTreeNode:treeNode collapseChildren:collapseChildren withRowAnimation:animation];
 }
 
+- (void)collapseRowForItem:(id)item helperItem:(id)helperItem collapseChildren:(BOOL)collapseChildren withRowAnimation:(RATreeViewRowAnimation)animation{
+
+  NSIndexPath *indexPath = [self indexPathForItem:item];
+  RATreeNode *treeNode = [self treeNodeForIndexPath:indexPath];
+  indexPath = [self indexPathForItem:helperItem];
+  RATreeNode *helperTreeNode = [self treeNodeForIndexPath:indexPath];
+  if (!treeNode || !helperTreeNode) {
+    return;
+  }
+  [self collapseCellForTreeNode:treeNode
+                 helperTreeNode:helperTreeNode
+               collapseChildren:collapseChildren
+               withRowAnimation:animation];
+}
 
 #pragma mark - Changing tree's structure
 

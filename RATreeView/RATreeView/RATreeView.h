@@ -480,6 +480,7 @@ typedef enum RATreeViewRowAnimation {
 - (void)expandRowForItem:(nullable id)item withRowAnimation:(RATreeViewRowAnimation)animation;
 - (void)expandRowForItem:(nullable id)item;
 - (void)collapseRowForItem:(nullable id)item collapseChildren:(BOOL)collapseChildren withRowAnimation:(RATreeViewRowAnimation)animation;
+- (void)collapseRowForItem:(id)item helperItem:(id)helperItem collapseChildren:(BOOL)collapseChildren withRowAnimation:(RATreeViewRowAnimation)animation;
 - (void)collapseRowForItem:(nullable id)item withRowAnimation:(RATreeViewRowAnimation)animation;
 - (void)collapseRowForItem:(nullable id)item;
 @property (nonatomic) BOOL expandsChildRowsWhenRowExpands;
